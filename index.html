@@ -171,19 +171,17 @@
         </div>
     </main>
 
-    <div id="pdf-template" style="position:absolute; left:-9999px; top:0; width:210mm; visibility:hidden;"> </div>
+    <div id="pdf-wrapper" style="position: absolute; left: -9999px; top: -9999px;">
+        <div id="pdf-template" style="width: 700px; background: white; color: black; padding: 30px;"></div>
+    </div>
 
     <script>
-        // State Schema Initialization
-        let appData = {
-            wedding: [],
-            homecoming: [],
-            tables: []
-        };
+        let appData = { wedding: [], homecoming: [], tables: [] };
 
-        // Load data on startup
         if (localStorage.getItem('wedding_planner_data')) {
-            appData = JSON.parse(localStorage.getItem('wedding_planner_data'));
+            try {
+                appData = JSON.parse(localStorage.getItem('wedding_planner_data'));
+            } catch(e) { console.error("Data parse error", e); }
         }
 
         function saveData() {
@@ -191,7 +189,6 @@
             renderAll();
         }
 
-        // Navigation Engine
         function switchPage(pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(`page-${pageId}`).classList.add('active');
@@ -208,14 +205,13 @@
             });
         }
 
-        // Guest Management System
         function addGuest(e, type) {
             e.preventDefault();
             const nameInput = document.getElementById(`${type}-name`);
             const countInput = document.getElementById(`${type}-count`);
             
             const guest = {
-                id: Date.now().toString(),
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
                 name: nameInput.value.trim(),
                 count: parseInt(countInput.value)
             };
@@ -227,7 +223,6 @@
         }
 
         function deleteGuest(id, type) {
-            // If deleting from homecoming, remove assignments from tables too
             if (type === 'homecoming') {
                 appData.tables.forEach(table => {
                     table.assigned = table.assigned.filter(guest => guest.id !== id);
@@ -237,17 +232,16 @@
             saveData();
         }
 
-        // Seating Architecture Engine
         function createTable(e) {
             e.preventDefault();
             const nameInput = document.getElementById('table-name');
             const seatsInput = document.getElementById('table-seats');
 
             const table = {
-                id: Date.now().toString(),
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
                 name: nameInput.value.trim(),
                 maxSeats: parseInt(seatsInput.value),
-                assigned: [] // Array of guest structural slices
+                assigned: []
             };
 
             appData.tables.push(table);
@@ -262,20 +256,18 @@
         }
 
         function assignGuestToTable(tableId, guestId) {
+            if(!guestId) return;
             const table = appData.tables.find(t => t.id === tableId);
-            const guest = appData.homehomecomingGuestLookup = appData.homecoming.find(g => g.id === guestId);
+            const guest = appData.homecoming.find(g => g.id === guestId);
             
             if (!table || !guest) return;
 
-            // Calculate current table capacity load
             const currentSeatedCount = table.assigned.reduce((acc, curr) => acc + curr.count, 0);
-            
             if (currentSeatedCount + guest.count > table.maxSeats) {
-                alert(`⚠️ Cannot fit ${guest.name} (${guest.count} people) into ${table.name}. Max seats exceeded!`);
+                alert(`⚠️ Cannot fit ${guest.name} (${guest.count} people). Table configuration capacity exceeded.`);
                 return;
             }
 
-            // Check if guest is already allocated to this specific table
             if (table.assigned.some(g => g.id === guestId)) return;
 
             table.assigned.push({ id: guest.id, name: guest.name, count: guest.count });
@@ -290,7 +282,6 @@
             }
         }
 
-        // Render UI Pipeline
         function renderAll() {
             renderEvent('wedding');
             renderEvent('homecoming');
@@ -328,11 +319,10 @@
             container.innerHTML = '';
 
             if (appData.tables.length === 0) {
-                container.innerHTML = `<div class="text-center p-8 bg-white rounded-2xl border border-dashed border-slate-200 text-slate-400">No tables created yet. Use the control panel to set up table configurations.</div>`;
+                container.innerHTML = `<div class="text-center p-8 bg-white rounded-2xl border border-dashed border-slate-200 text-slate-400">No tables created yet.</div>`;
                 return;
             }
 
-            // Filter out which homecoming guests are currently unassigned anywhere
             const assignedGuestIds = new Set();
             appData.tables.forEach(t => t.assigned.forEach(g => assignedGuestIds.add(g.id)));
             const unassignedGuests = appData.homecoming.filter(g => !assignedGuestIds.has(g.id));
@@ -360,18 +350,16 @@
                         <div class="flex justify-between items-start border-b border-slate-100 pb-3 mb-4">
                             <div>
                                 <h4 class="text-lg font-bold text-slate-900">${table.name}</h4>
-                                <p class="text-sm text-slate-500">Capacity: <span class="font-semibold ${currentLoad > table.maxSeats ? 'text-rose-600': 'text-slate-700'}">${currentLoad}</span> / ${table.maxSeats} Seats Filled</p>
+                                <p class="text-sm text-slate-500">Seats: <span class="font-semibold text-slate-700">${currentLoad}</span> / ${table.maxSeats} Filled</p>
                             </div>
                             <button onclick="deleteTable('${table.id}')" class="text-slate-400 hover:text-rose-600 text-sm transition">Delete Table</button>
                         </div>
-
                         <div class="mb-4 flex gap-2">
-                            <select id="select-${table.id}" class="flex-1 text-sm bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <select id="select-${table.id}" class="flex-1 text-sm bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none">
                                 ${guestOptions}
                             </select>
                             <button onclick="assignGuestToTable('${table.id}', document.getElementById('select-${table.id}').value)" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-1.5 rounded-lg transition">Assign</button>
                         </div>
-
                         <div class="space-y-2">
                             ${seatedRows || '<p class="text-xs text-slate-400 text-center py-2">Table is empty.</p>'}
                         </div>
@@ -380,24 +368,14 @@
             });
         }
 
-        // PDF Generation Layout Mapping Architecture
         function downloadPDF(mode) {
             const template = document.getElementById('pdf-template');
-            template.innerHTML = ''; // Fresh DOM buffer state reset
-            template.style.position = 'absolute';
-            template.style.left = '-9999px';
-            template.style.top = '0';
-            template.style.width = '210mm';
-            template.style.visibility = 'hidden';
-            template.style.display = 'block';
+            template.innerHTML = ''; 
 
-            let filename = 'document.pdf';
+            let filename = `${mode}-report.pdf`;
             
-            // Build pixel-perfect aesthetic printable document layouts using explicit semantic structures
             if (mode === 'wedding' || mode === 'homecoming') {
-                const title = mode.charAt(0).toUpperCase() + mode.slice(1);
-                filename = `${mode}-guest-report.pdf`;
-                
+                const title = mode.toUpperCase();
                 let totalGuests = appData[mode].reduce((acc, curr) => acc + curr.count, 0);
                 
                 let guestRows = '';
@@ -405,107 +383,90 @@
                     guestRows += `
                         <tr style="border-bottom: 1px solid #e2e8f0;">
                             <td style="padding: 10px; font-size: 14px;">${index + 1}</td>
-                            <td style="padding: 10px; font-size: 14px; font-weight: 500;">${g.name}</td>
-                            <td style="padding: 10px; font-size: 14px; text-align: center;">${g.count}</td>
+                            <td style="padding: 10px; font-size: 14px; font-weight: bold; color:#1e293b;">${g.name}</td>
+                            <td style="padding: 10px; font-size: 14px; text-align: center; font-weight: bold;">${g.count}</td>
                         </tr>
                     `;
                 });
 
                 template.innerHTML = `
-                    <div style="font-family: Arial, sans-serif; padding: 20px;">
-                        <div style="border-bottom: 3px solid #4f46e5; padding-bottom: 15px; margin-bottom: 25px;">
-                            <h1 style="color: #1e1b4b; font-size: 28px; margin: 0;">${title} Guest Registry Report</h1>
-                            <p style="color: #64748b; margin: 5px 0 0 0;">Generated on ${new Date().toLocaleDateString()}</p>
+                    <div style="font-family: Arial, sans-serif;">
+                        <div style="border-bottom: 3px solid #4f46e5; padding-bottom: 10px; margin-bottom: 20px;">
+                            <h1 style="color: #1e1b4b; font-size: 26px; margin: 0;">${title} GUEST REGISTRY</h1>
+                            <p style="color: #64748b; margin: 5px 0 0 0; font-size: 12px;">Generated on ${new Date().toLocaleDateString()}</p>
                         </div>
-                        
-                        <div style="display: flex; gap: 20px; margin-bottom: 30px;">
-                            <div style="flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px;">
-                                <span style="font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: bold;">Total Invitations</span>
-                                <div style="font-size: 24px; font-weight: bold; color: #4f46e5; margin-top: 5px;">${appData[mode].length} Families</div>
-                            </div>
-                            <div style="flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px;">
-                                <span style="font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: bold;">Expected Total Headcount</span>
-                                <div style="font-size: 24px; font-weight: bold; color: #16a34a; margin-top: 5px;">${totalGuests} Guests</div>
-                            </div>
+                        <div style="margin-bottom: 20px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <span style="font-size: 13px; color: #475569;">Total Invitations Sent (Families): <strong>${appData[mode].length}</strong></span><br>
+                            <span style="font-size: 13px; color: #475569;">Total Headcount Expected (People): <strong>${totalGuests}</strong></span>
                         </div>
-
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                        <table style="width: 100%; border-collapse: collapse;">
                             <thead>
                                 <tr style="background: #4f46e5; color: white;">
-                                    <th style="padding: 12px; text-align: left; width: 60px;">#</th>
-                                    <th style="padding: 12px; text-align: left;">Family / Invitee Name</th>
-                                    <th style="padding: 12px; text-align: center; width: 120px;">Party Size</th>
+                                    <th style="padding: 10px; text-align: left; width: 50px;">#</th>
+                                    <th style="padding: 10px; text-align: left;">Name / Family Group</th>
+                                    <th style="padding: 10px; text-align: center; width: 100px;">Size</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${guestRows || '<tr><td colspan="3" style="text-align:center; padding:20px; color:#94a3b8;">No registered guests found.</td></tr>'}
+                                ${guestRows || '<tr><td colspan="3" style="text-align:center; padding:20px; color:#94a3b8;">No registered records found.</td></tr>'}
                             </tbody>
                         </table>
                     </div>
                 `;
             } else if (mode === 'seating') {
-                filename = 'homecoming-seating-plan.pdf';
                 let tablesHtml = '';
-
                 appData.tables.forEach(table => {
                     let seatedListHtml = '';
                     table.assigned.forEach((g, idx) => {
                         seatedListHtml += `
                             <tr style="border-bottom: 1px solid #f1f5f9;">
-                                <td style="padding: 6px 10px; font-size: 13px; color:#475569; width:30px;">${idx+1}.</td>
-                                <td style="padding: 6px 10px; font-size: 13px; font-weight:500; color:#1e293b;">${g.name}</td>
-                                <td style="padding: 6px 10px; font-size: 13px; text-align:right; color:#64748b;">${g.count} Seats</td>
+                                <td style="padding: 6px 10px; font-size: 13px; color:#475569; width:30px;">${idx+1}</td>
+                                <td style="padding: 6px 10px; font-size: 13px; font-weight:bold; color:#1e293b;">${g.name}</td>
+                                <td style="padding: 6px 10px; font-size: 13px; text-align:right; font-weight:bold;">${g.count} Seats</td>
                             </tr>
                         `;
                     });
 
                     const currentLoad = table.assigned.reduce((acc, curr) => acc + curr.count, 0);
-
                     tablesHtml += `
-                        <div style="break-inside: avoid; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; margin-bottom: 20px; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                            <div style="border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 20px; background: #ffffff; page-break-inside: avoid;">
+                            <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 10px;">
                                 <h3 style="margin: 0; color: #1e3a8a; font-size: 16px;">${table.name}</h3>
-                                <span style="font-size: 12px; font-weight: bold; padding: 2px 8px; background: #eff6ff; color: #1e40af; border-radius: 12px;">
-                                    Filled: ${currentLoad} / ${table.maxSeats}
-                                </span>
+                                <p style="margin: 3px 0 0 0; font-size: 12px; color:#64748b;">Seated capacity: <strong>${currentLoad} / ${table.maxSeats}</strong> seats occupied.</p>
                             </div>
                             <table style="width: 100%; border-collapse: collapse;">
-                                ${seatedListHtml || '<tr><td colspan="3" style="text-align:center; padding:10px; color:#94a3b8; font-size:12px;">No guests seated here yet.</td></tr>'}
+                                ${seatedListHtml || '<tr><td colspan="3" style="text-align:center; padding:10px; color:#94a3b8; font-size:12px;">No guests seated yet.</td></tr>'}
                             </table>
                         </div>
                     `;
                 });
 
                 template.innerHTML = `
-                    <div style="font-family: Arial, sans-serif; padding: 20px;">
-                        <div style="border-bottom: 3px solid #1e3a8a; padding-bottom: 15px; margin-bottom: 25px;">
-                            <h1 style="color: #0f172a; font-size: 26px; margin: 0;">Homecoming Table Seating Chart</h1>
-                            <p style="color: #64748b; margin: 5px 0 0 0;">Comprehensive floor layout registry Generated on ${new Date().toLocaleDateString()}</p>
+                    <div style="font-family: Arial, sans-serif;">
+                        <div style="border-bottom: 3px solid #1e3a8a; padding-bottom: 10px; margin-bottom: 20px;">
+                            <h1 style="color: #0f172a; font-size: 24px; margin: 0;">HOMECOMING SEATING ARRANGEMENT</h1>
+                            <p style="color: #64748b; margin: 5px 0 0 0; font-size: 12px;">Generated on ${new Date().toLocaleDateString()}</p>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                            ${tablesHtml}
-                        </div>
+                        <div>${tablesHtml || '<p style="color:#94a3b8;">No table layouts configured.</p>'}</div>
                     </div>
                 `;
             }
 
-            // Run html2pdf pipeline options
             const opt = {
                 margin:       [0.5, 0.5, 0.5, 0.5],
                 filename:     filename,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
                 jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
             };
 
-            // Process rendering output safely 
+            // Enhanced fallback promise handling structure
             html2pdf().set(opt).from(template).save().catch(err => {
-                console.error('PDF download error:', err);
-                alert('Unable to download PDF. Please make sure your browser allows downloads from this page.');
+                console.error("PDF engine crash, running direct iframe pop down recovery:", err);
+                alert("Browser system download blocked. Please look at the top right of your URL address bar and click 'Allow downloads/popups' for this application.");
             });
         }
 
-        // Run Initial Render State Cycle
         renderAll();
     </script>
 </body>
