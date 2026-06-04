@@ -5,179 +5,182 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wedding & Homecoming Planner</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         .page { display: none; }
         .page.active { display: block; }
+        
+        /* High-accuracy print styling layers */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
 
-    <nav class="bg-indigo-600 text-white shadow-md sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center flex-wrap gap-2">
-            <h1 class="text-xl font-bold tracking-wide">Event Planner Pro</h1>
-            <div class="flex gap-1 md:gap-2">
-                <button onclick="switchPage('wedding')" id="nav-wedding" class="px-3 py-1.5 rounded-lg bg-indigo-700 font-medium transition text-sm md:text-base">Wedding</button>
-                <button onclick="switchPage('homecoming')" id="nav-homecoming" class="px-3 py-1.5 rounded-lg hover:bg-indigo-500 font-medium transition text-sm md:text-base">Homecoming</button>
-                <button onclick="switchPage('seating')" id="nav-seating" class="px-3 py-1.5 rounded-lg hover:bg-indigo-500 font-medium transition text-sm md:text-base">HC Seating</button>
-            </div>
-        </div>
-    </nav>
-
-    <main class="max-w-6xl mx-auto px-4 py-6 md:py-10">
-        
-        <div id="page-wedding" class="page active">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <div>
-                    <h2 class="text-3xl font-extrabold text-slate-900">Wedding Guest List</h2>
-                    <p class="text-slate-500">Manage your invitations and total headcounts.</p>
-                </div>
-                <button onclick="downloadPDF('wedding')" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-xl shadow transition flex items-center justify-center gap-2">
-                    📥 Download Wedding PDF
-                </button>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <p class="text-sm font-medium text-slate-400 uppercase tracking-wider">Total Invitations Sent</p>
-                    <p id="wedding-total-families" class="text-3xl font-bold text-indigo-600 mt-1">0</p>
-                </div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <p class="text-sm font-medium text-slate-400 uppercase tracking-wider">Total Headcount Expected</p>
-                    <p id="wedding-total-guests" class="text-3xl font-bold text-emerald-600 mt-1">0</p>
+    <div id="app-content" class="no-print">
+        <nav class="bg-indigo-600 text-white shadow-md sticky top-0 z-50">
+            <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center flex-wrap gap-2">
+                <h1 class="text-xl font-bold tracking-wide">Event Planner Pro</h1>
+                <div class="flex gap-1 md:gap-2">
+                    <button onclick="switchPage('wedding')" id="nav-wedding" class="px-3 py-1.5 rounded-lg bg-indigo-700 font-medium transition text-sm md:text-base">Wedding</button>
+                    <button onclick="switchPage('homecoming')" id="nav-homecoming" class="px-3 py-1.5 rounded-lg hover:bg-indigo-500 font-medium transition text-sm md:text-base">Homecoming</button>
+                    <button onclick="switchPage('seating')" id="nav-seating" class="px-3 py-1.5 rounded-lg hover:bg-indigo-500 font-medium transition text-sm md:text-base">HC Seating</button>
                 </div>
             </div>
+        </nav>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
-                    <h3 class="text-lg font-bold mb-4">Add Guest / Family</h3>
-                    <form id="wedding-form" onsubmit="addGuest(event, 'wedding')" class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-600 mb-1">Family/Guest Name</label>
-                            <input type="text" id="wedding-name" required placeholder="e.g., Mr. & Mrs. Smith" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <main class="max-w-6xl mx-auto px-4 py-6 md:py-10">
+            
+            <div id="page-wedding" class="page active">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <div>
+                        <h2 class="text-3xl font-extrabold text-slate-900">Wedding Guest List</h2>
+                        <p class="text-slate-500">Manage your invitations and total headcounts.</p>
+                    </div>
+                    <button onclick="generateNativePDF('wedding')" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow transition flex items-center justify-center gap-2">
+                        📥 Download Wedding PDF
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <p class="text-sm font-medium text-slate-400 uppercase tracking-wider">Total Invitations Sent</p>
+                        <p id="wedding-total-families" class="text-3xl font-bold text-indigo-600 mt-1">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <p class="text-sm font-medium text-slate-400 uppercase tracking-wider">Total Headcount Expected</p>
+                        <p id="wedding-total-guests" class="text-3xl font-bold text-emerald-600 mt-1">0</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
+                        <h3 class="text-lg font-bold mb-4">Add Guest / Family</h3>
+                        <form id="wedding-form" onsubmit="addGuest(event, 'wedding')" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1">Family/Guest Name</label>
+                                <input type="text" id="wedding-name" required placeholder="e.g., Mr. & Mrs. Smith" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1">Number of People Invited</label>
+                                <input type="number" id="wedding-count" min="1" required placeholder="e.g., 4" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-lg transition">Add to List</button>
+                        </form>
+                    </div>
+                    <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <h3 class="text-lg font-bold mb-4">Guest Registry</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-slate-400 text-sm font-medium">
+                                        <th class="pb-3">Name</th>
+                                        <th class="pb-3 text-center">Party Size</th>
+                                        <th class="pb-3 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="wedding-table-body" class="divide-y divide-slate-100">
+                                    </tbody>
+                            </table>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-600 mb-1">Number of People Invited</label>
-                            <input type="number" id="wedding-count" min="1" required placeholder="e.g., 4" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-lg transition">Add to List</button>
-                    </form>
-                </div>
-                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h3 class="text-lg font-bold mb-4">Guest Registry</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="border-b border-slate-100 text-slate-400 text-sm font-medium">
-                                    <th class="pb-3">Name</th>
-                                    <th class="pb-3 text-center">Party Size</th>
-                                    <th class="pb-3 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="wedding-table-body" class="divide-y divide-slate-100">
-                                </tbody>
-                        </table>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div id="page-homecoming" class="page">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <div>
-                    <h2 class="text-3xl font-extrabold text-slate-900">Homecoming Guest List</h2>
-                    <p class="text-slate-500">Manage invitations for your Homecoming event.</p>
+            <div id="page-homecoming" class="page">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <div>
+                        <h2 class="text-3xl font-extrabold text-slate-900">Homecoming Guest List</h2>
+                        <p class="text-slate-500">Manage invitations for your Homecoming event.</p>
+                    </div>
+                    <button onclick="generateNativePDF('homecoming')" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow transition flex items-center justify-center gap-2">
+                        📥 Download Homecoming PDF
+                    </button>
                 </div>
-                <button onclick="downloadPDF('homecoming')" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-xl shadow transition flex items-center justify-center gap-2">
-                    📥 Download Homecoming PDF
-                </button>
-            </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <p class="text-sm font-medium text-slate-400 uppercase tracking-wider">Total Invitations Sent</p>
-                    <p id="homecoming-total-families" class="text-3xl font-bold text-indigo-600 mt-1">0</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <p class="text-sm font-medium text-slate-400 uppercase tracking-wider">Total Invitations Sent</p>
+                        <p id="homecoming-total-families" class="text-3xl font-bold text-indigo-600 mt-1">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <p class="text-sm font-medium text-slate-400 uppercase tracking-wider">Total Headcount Expected</p>
+                        <p id="homecoming-total-guests" class="text-3xl font-bold text-emerald-600 mt-1">0</p>
+                    </div>
                 </div>
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <p class="text-sm font-medium text-slate-400 uppercase tracking-wider">Total Headcount Expected</p>
-                    <p id="homecoming-total-guests" class="text-3xl font-bold text-emerald-600 mt-1">0</p>
-                </div>
-            </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
-                    <h3 class="text-lg font-bold mb-4">Add Guest / Family</h3>
-                    <form id="homecoming-form" onsubmit="addGuest(event, 'homecoming')" class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-600 mb-1">Family/Guest Name</label>
-                            <input type="text" id="homecoming-name" required placeholder="e.g., Jane Doe" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
+                        <h3 class="text-lg font-bold mb-4">Add Guest / Family</h3>
+                        <form id="homecoming-form" onsubmit="addGuest(event, 'homecoming')" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1">Family/Guest Name</label>
+                                <input type="text" id="homecoming-name" required placeholder="e.g., Jane Doe" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1">Number of People Invited</label>
+                                <input type="number" id="homecoming-count" min="1" required placeholder="e.g., 2" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-lg transition">Add to List</button>
+                        </form>
+                    </div>
+                    <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                        <h3 class="text-lg font-bold mb-4">Guest Registry</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-slate-400 text-sm font-medium">
+                                        <th class="pb-3">Name</th>
+                                        <th class="pb-3 text-center">Party Size</th>
+                                        <th class="pb-3 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="homecoming-table-body" class="divide-y divide-slate-100">
+                                    </tbody>
+                            </table>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-600 mb-1">Number of People Invited</label>
-                            <input type="number" id="homecoming-count" min="1" required placeholder="e.g., 2" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-lg transition">Add to List</button>
-                    </form>
-                </div>
-                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h3 class="text-lg font-bold mb-4">Guest Registry</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="border-b border-slate-100 text-slate-400 text-sm font-medium">
-                                    <th class="pb-3">Name</th>
-                                    <th class="pb-3 text-center">Party Size</th>
-                                    <th class="pb-3 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="homecoming-table-body" class="divide-y divide-slate-100">
-                                </tbody>
-                        </table>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div id="page-seating" class="page">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <div>
-                    <h2 class="text-3xl font-extrabold text-slate-900">Homecoming Seating Arrangements</h2>
-                    <p class="text-slate-500">Assign your Homecoming guests to specific tables and seats.</p>
-                </div>
-                <button onclick="downloadPDF('seating')" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-xl shadow transition flex items-center justify-center gap-2">
-                    📥 Download Seating Plan PDF
-                </button>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
-                    <h3 class="text-lg font-bold mb-4">Create New Table</h3>
-                    <form id="table-form" onsubmit="createTable(event)" class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-600 mb-1">Table Name/Number</label>
-                            <input type="text" id="table-name" required placeholder="e.g., Table 1, VIP Table" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-600 mb-1">Total Available Seats</label>
-                            <input type="number" id="table-seats" min="1" required placeholder="e.g., 8" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        </div>
-                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-lg transition">Create Table</button>
-                    </form>
-                </div>
-
-                <div class="lg:col-span-2 space-y-6" id="tables-container">
+            <div id="page-seating" class="page">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <div>
+                        <h2 class="text-3xl font-extrabold text-slate-900">Homecoming Seating Arrangements</h2>
+                        <p class="text-slate-500">Assign your Homecoming guests to specific tables and seats.</p>
                     </div>
-            </div>
-        </div>
-    </main>
+                    <button onclick="generateNativePDF('seating')" class="w-full md:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2.5 rounded-xl shadow transition flex items-center justify-center gap-2">
+                        📥 Download Seating Plan PDF
+                    </button>
+                </div>
 
-    <div id="pdf-container-visible" class="max-w-4xl mx-auto p-4 bg-white mt-10 rounded-2xl border border-slate-200 shadow-sm hidden">
-        <div class="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
-            <span class="text-sm font-semibold text-indigo-600">📄 Export Processing Mode</span>
-            <button onclick="document.getElementById('pdf-container-visible').classList.add('hidden')" class="text-xs text-slate-400 hover:text-slate-600 font-bold">Dismiss Preview</button>
-        </div>
-        <div id="pdf-template" class="bg-white text-slate-900 p-6"></div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 h-fit">
+                        <h3 class="text-lg font-bold mb-4">Create New Table</h3>
+                        <form id="table-form" onsubmit="createTable(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1">Table Name/Number</label>
+                                <input type="text" id="table-name" required placeholder="e.g., Table 1, VIP Table" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-600 mb-1">Total Available Seats</label>
+                                <input type="number" id="table-seats" min="1" required placeholder="e.g., 8" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-lg transition">Create Table</button>
+                        </form>
+                    </div>
+
+                    <div class="lg:col-span-2 space-y-6" id="tables-container">
+                        </div>
+                </div>
+            </div>
+        </main>
     </div>
+
+    <div id="print-area"></div>
 
     <script>
         let appData = { wedding: [], homecoming: [], tables: [] };
@@ -185,7 +188,7 @@
         if (localStorage.getItem('wedding_planner_data')) {
             try {
                 appData = JSON.parse(localStorage.getItem('wedding_planner_data'));
-            } catch(e) { console.error("Data parse error", e); }
+            } catch(e) { console.error("Data load runtime issue", e); }
         }
 
         function saveData() {
@@ -268,7 +271,7 @@
 
             const currentSeatedCount = table.assigned.reduce((acc, curr) => acc + curr.count, 0);
             if (currentSeatedCount + guest.count > table.maxSeats) {
-                alert(`⚠️ Cannot fit ${guest.name} (${guest.count} people). Table configuration capacity exceeded.`);
+                alert(`⚠️ Cannot fit ${guest.name} (${guest.count} people). Table capacity exceeded.`);
                 return;
             }
 
@@ -372,16 +375,11 @@
             });
         }
 
-        function downloadPDF(mode) {
-            const previewContainer = document.getElementById('pdf-container-visible');
-            const template = document.getElementById('pdf-template');
-            
-            // Show the preview window layout block so html2pdf can safely process it
-            previewContainer.classList.remove('hidden');
-            template.innerHTML = ''; 
+        // Native High-Compatibility Printing Architecture Pipeline
+        function generateNativePDF(mode) {
+            const printArea = document.getElementById('print-area');
+            printArea.innerHTML = ''; 
 
-            let filename = `${mode}-report.pdf`;
-            
             if (mode === 'wedding' || mode === 'homecoming') {
                 const title = mode.toUpperCase();
                 let totalGuests = appData[mode].reduce((acc, curr) => acc + curr.count, 0);
@@ -389,34 +387,40 @@
                 let guestRows = '';
                 appData[mode].forEach((g, index) => {
                     guestRows += `
-                        <tr style="border-bottom: 1px solid #e2e8f0;">
-                            <td style="padding: 10px; font-size: 14px;">${index + 1}</td>
-                            <td style="padding: 10px; font-size: 14px; font-weight: bold; color:#1e293b;">${g.name}</td>
-                            <td style="padding: 10px; font-size: 14px; text-align: center; font-weight: bold;">${g.count}</td>
+                        <tr style="border-bottom: 1px solid #cbd5e1;">
+                            <td style="padding: 12px; font-size: 14px; text-align: left;">${index + 1}</td>
+                            <td style="padding: 12px; font-size: 14px; font-weight: bold; color: #0f172a;">${g.name}</td>
+                            <td style="padding: 12px; font-size: 14px; text-align: center; font-weight: bold; color: #0f172a;">${g.count}</td>
                         </tr>
                     `;
                 });
 
-                template.innerHTML = `
-                    <div style="font-family: Arial, sans-serif; background: white; padding: 10px;">
-                        <div style="border-bottom: 3px solid #4f46e5; padding-bottom: 10px; margin-bottom: 20px;">
-                            <h1 style="color: #1e1b4b; font-size: 24px; margin: 0; font-weight: bold;">${title} GUEST REGISTRY</h1>
-                            <p style="color: #64748b; margin: 5px 0 0 0; font-size: 11px;">Generated on ${new Date().toLocaleDateString()}</p>
+                printArea.innerHTML = `
+                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 40px; background: white;">
+                        <div style="border-bottom: 3px solid #4f46e5; padding-bottom: 15px; margin-bottom: 25px;">
+                            <h1 style="color: #1e1b4b; font-size: 28px; margin: 0; font-weight: 800; tracking-wide;">${title} EVENT GUEST REGISTRY</h1>
+                            <p style="color: #64748b; margin: 6px 0 0 0; font-size: 13px;">Official Planning Report • Generated on ${new Date().toLocaleDateString()}</p>
                         </div>
-                        <div style="margin-bottom: 20px; background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 13px;">
-                            <p style="margin: 0 0 4px 0; color: #475569;">Total Invitations Sent (Families): <strong>${appData[mode].length}</strong></p>
-                            <p style="margin: 0; color: #475569;">Total Headcount Expected (People): <strong>${totalGuests}</strong></p>
+                        <div style="margin-bottom: 30px; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; gap: 40px;">
+                            <div>
+                                <span style="font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Total Invited Families</span>
+                                <div style="font-size: 24px; font-weight: bold; color: #4f46e5; margin-top: 4px;">${appData[mode].length}</div>
+                            </div>
+                            <div>
+                                <span style="font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Total Expected Headcount</span>
+                                <div style="font-size: 24px; font-weight: bold; color: #10b981; margin-top: 4px;">${totalGuests} People</div>
+                            </div>
                         </div>
                         <table style="width: 100%; border-collapse: collapse;">
                             <thead>
-                                <tr style="background: #4f46e5; color: white; font-size: 13px;">
-                                    <th style="padding: 10px; text-align: left; width: 50px;">#</th>
-                                    <th style="padding: 10px; text-align: left;">Name / Family Group</th>
-                                    <th style="padding: 10px; text-align: center; width: 100px;">Size</th>
+                                <tr style="background: #4f46e5; color: white;">
+                                    <th style="padding: 12px; text-align: left; width: 60px; font-weight: 600;">#</th>
+                                    <th style="padding: 12px; text-align: left; font-weight: 600;">Invitee Group / Family Name</th>
+                                    <th style="padding: 12px; text-align: center; width: 120px; font-weight: 600;">Party Size</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${guestRows || '<tr><td colspan="3" style="text-align:center; padding:20px; color:#94a3b8;">No registered records found.</td></tr>'}
+                                ${guestRows || '<tr><td colspan="3" style="text-align:center; padding:30px; color:#94a3b8;">No registered records found.</td></tr>'}
                             </tbody>
                         </table>
                     </div>
@@ -427,54 +431,45 @@
                     let seatedListHtml = '';
                     table.assigned.forEach((g, idx) => {
                         seatedListHtml += `
-                            <tr style="border-bottom: 1px solid #f1f5f9;">
-                                <td style="padding: 6px 10px; font-size: 13px; color:#475569; width:30px;">${idx+1}</td>
-                                <td style="padding: 6px 10px; font-size: 13px; font-weight:bold; color:#1e293b;">${g.name}</td>
-                                <td style="padding: 6px 10px; font-size: 13px; text-align:right; font-weight:bold;">${g.count} Seats</td>
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 10px; font-size: 14px; color:#475569; width:40px;">${idx+1}</td>
+                                <td style="padding: 10px; font-size: 14px; font-weight: bold; color:#1e293b;">${g.name}</td>
+                                <td style="padding: 10px; font-size: 14px; text-align: right; font-weight: bold; color:#475569;">${g.count} Seats Assigned</td>
                             </tr>
                         `;
                     });
 
                     const currentLoad = table.assigned.reduce((acc, curr) => acc + curr.count, 0);
                     tablesHtml += `
-                        <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #ffffff; page-break-inside: avoid;">
-                            <div style="border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 10px;">
-                                <h3 style="margin: 0; color: #1e3a8a; font-size: 15px; font-weight: bold;">${table.name}</h3>
-                                <p style="margin: 3px 0 0 0; font-size: 12px; color:#64748b;">Seated capacity: <strong>${currentLoad} / ${table.maxSeats}</strong> seats occupied.</p>
+                        <div style="border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; margin-bottom: 25px; background: #ffffff; page-break-inside: avoid;">
+                            <div style="border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                                <h3 style="margin: 0; color: #1e3a8a; font-size: 18px; font-weight: 700;">${table.name}</h3>
+                                <span style="font-size: 13px; font-weight: bold; background: #f1f5f9; padding: 4px 10px; border-radius: 8px; color: #1e293b;">
+                                    Total Seated: ${currentLoad} / ${table.maxSeats}
+                                </span>
                             </div>
                             <table style="width: 100%; border-collapse: collapse;">
-                                ${seatedListHtml || '<tr><td colspan="3" style="text-align:center; padding:10px; color:#94a3b8; font-size:12px;">No guests seated yet.</td></tr>'}
+                                ${seatedListHtml || '<tr><td colspan="3" style="text-align:center; padding:15px; color:#94a3b8; font-size:13px;">No guests seated yet.</td></tr>'}
                             </table>
                         </div>
                     `;
                 });
 
-                template.innerHTML = `
-                    <div style="font-family: Arial, sans-serif; background: white; padding: 10px;">
-                        <div style="border-bottom: 3px solid #1e3a8a; padding-bottom: 10px; margin-bottom: 20px;">
-                            <h1 style="color: #0f172a; font-size: 24px; margin: 0; font-weight: bold;">HOMECOMING SEATING ARRANGEMENT</h1>
-                            <p style="color: #64748b; margin: 5px 0 0 0; font-size: 12px;">Generated on ${new Date().toLocaleDateString()}</p>
+                printArea.innerHTML = `
+                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 40px; background: white;">
+                        <div style="border-bottom: 3px solid #1e3a8a; padding-bottom: 15px; margin-bottom: 25px;">
+                            <h1 style="color: #0f172a; font-size: 28px; margin: 0; font-weight: 800;">HOMECOMING SEATING ARRANGEMENT</h1>
+                            <p style="color: #64748b; margin: 6px 0 0 0; font-size: 13px;">Official Seating Blueprint • Generated on ${new Date().toLocaleDateString()}</p>
                         </div>
-                        <div>${tablesHtml || '<p style="color:#94a3b8;">No table layouts configured.</p>'}</div>
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
+                            ${tablesHtml || '<p style="color:#94a3b8;">No table layouts configured.</p>'}
+                        </div>
                     </div>
                 `;
             }
 
-            const opt = {
-                margin:       [0.5, 0.5, 0.5, 0.5],
-                filename:     filename,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, logging: false },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
-
-            // Execute processing pipeline directly
-            html2pdf().set(opt).from(template).save().then(() => {
-                // Autohide preview compilation block upon successful generation delivery
-                setTimeout(() => { previewContainer.classList.add('hidden'); }, 1000);
-            }).catch(err => {
-                console.error("Rendering issue detected:", err);
-            });
+            // Fire native platform frame print layout window execution immediately
+            window.print();
         }
 
         renderAll();
